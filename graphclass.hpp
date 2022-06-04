@@ -1,38 +1,28 @@
 #pragma once
 #include <iostream>
 #include <cmath>
+#include <vector>
 
-class Vertex{ // equivalent to a node
-public:
+
+struct Node{
   int value;
-  Vertex* adjacent;
+  std::vector<Node> adjList;
 
-  Vertex();
-  Vertex(int val);
-  Vertex(int val, Vertex* adj);
-  print_vertex();
+Node();
+Node(int _value);
+Node(int _value, std::vector<Node> _adjList);
+
+void insert(Node newNode);
+void printNode();
 };
 
-class Edge{ // connects vertices
-public:
-  int weight;
-  Vertex* start;
-  Vertex* end;
-
-  Edge();
-  Edge(int w, Vertex* s, Vertex* e);
-  print_edge();
-};
+using adjVector = std::vector<std::vector<Node>>; // define alias here, otherwise it's quite messy
 
 class Graph{
-private:
-  Vertex* root;
-
 public:
-  Graph();
-  Graph(Vertex* _root);
-  insert(Vertex* vertex, Edge edge);
-  connect(Vertex* v1, Vertex* v2);
-  print_graph();
+  adjVector adjLists;
 
-}
+Graph();
+Graph(adjVector _adjLists);
+void printGraph();
+};

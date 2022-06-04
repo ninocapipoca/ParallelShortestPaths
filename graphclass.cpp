@@ -1,38 +1,25 @@
 #include <iostream>
 #include <cmath>
 #include "graphclass.hpp"
+#include <vector>
 
 using namespace std;
 
-Vertex::Vertex(int val){
-  value = val;
-  adjacent = NULL;
+Node::Node(int _value){
+  value = _value;
+  std::vector<Node> empty = { };
+  adjList = empty;
 }
 
-Vertex::Vertex(int val, Vertex* adj){
-  value = val;
-  adjacent = adj;
+Node::Node(int _value, std::vector<Node> _adjList){
+  value = _value;
+  adjList = _adjList;
 }
 
-void print_vertex(){
-  cout << "value is " << val << endl;
-  cout << "adjacent vertex is of value " << adjacent.val << endl;
+void Node::insert(Node newNode){
+  this->adjList.push_back(newNode);
 }
 
-Edge::Edge(int w, Vertex* s, Vertex* e){
-  weight = w;
-  start = s;
-  end = e;
-}
-
-void print_edge(){
-
-}
-
-Graph::Graph(Vertex* _root){
-  root = _root;
-}
-
-void print_graph(){
-
+Graph::Graph(adjVector _adjLists){
+  adjLists = _adjLists;
 }
