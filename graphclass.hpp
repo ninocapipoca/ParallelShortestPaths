@@ -16,13 +16,14 @@ void insert(Node newNode);
 void printNode();
 };
 
-using adjVector = std::vector<std::vector<Node>>; // define alias here, otherwise it's quite messy
+//using adjVector = std::vector<Node>; // define alias here, otherwise it's quite messy
 
 class Graph{
 public:
-  adjVector adjLists;
+  std::vector<Node> nodes;
 
 Graph();
-Graph(adjVector _adjLists);
+Graph(std::vector<Node> _nodes);
 void printGraph();
+bool is_empty();
 };

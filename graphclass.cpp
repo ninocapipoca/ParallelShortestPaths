@@ -21,24 +21,34 @@ void Node::insert(Node newNode){
   this->adjList.push_back(newNode);
 }
 
-Graph::Graph(adjVector _adjLists){
-  adjLists = _adjLists;
+Graph::Graph(adjacencyList _nodes){
+  nodes = _nodes;
+}
+
+bool Graph::is_empty(){
+  return nodes.empty();
 }
 
 void Node::printNode(){
-  cout << "Node w/ val ";
+  cout << "-------" << endl;
+  cout << "Parent: ";
   cout << this->value << endl;
 
 
   if (!(this->adjList).empty()){
-    cout << "next: ";
-    (this->adjList[0]).printNode();
+    cout << "\n Children: ";
+    for (auto ptr = adjList.begin(); ptr < adjList.end(); ptr++){
+      cout << "Node w/ val";
+      cout << ptr->value << endl;
+    }
   }
 
 }
 
-void printAdjList(vector<Node> list){
-  for (auto ptr = list.begin(); ptr < list.end(); ptr++){
+void Graph::printGraph(){
+  cout << "printing graph" << endl;
+  auto test = nodes.begin();
+  for (auto ptr = nodes.begin(); ptr != nodes.end(); ptr++){
     ptr->printNode();
   }
 }
