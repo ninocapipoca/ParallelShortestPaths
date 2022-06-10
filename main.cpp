@@ -23,19 +23,19 @@ int main()
 
 
     // tester code for graphs & printing them
-    // Node node1(1), node2(2), node3(3), node4(4);
-    // std::cout << "testing insert" << std::endl;
-    // node1.insert(node4);
-    // node2.insert(node4);
-    // node2.insert(node3);
-    // node3.insert(node2);
-    // node4.insert(node1);
-    // node4.insert(node2);
-    //
-    // std::vector<Node> _nodes = {node1, node2, node3, node4};
-    // Graph _graph(_nodes);
-    // std::cout << _graph.is_empty() << endl;
-    // _graph.printGraph();
+    Node node1(1, 1), node2(2, 2), node3(3, 3), node4(4, 4);
+    std::cout << "testing insert" << std::endl;
+    node1.insert(node4);
+    node2.insert(node4);
+    node2.insert(node3);
+    node3.insert(node2);
+    node4.insert(node1);
+    node4.insert(node2);
+
+    std::vector<Node> _nodes = {node1, node2, node3, node4};
+    Graph _graph(_nodes);
+    std::cout << _graph.is_empty() << endl;
+    _graph.printGraph();
 
 
 

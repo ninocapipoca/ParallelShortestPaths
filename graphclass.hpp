@@ -5,12 +5,12 @@
 
 
 struct Node{
-  int value;
+  int value, weight;
   std::vector<Node> adjList;
 
 Node();
-Node(int _value);
-Node(int _value, std::vector<Node> _adjList);
+Node(int _value, int _weight);
+Node(int _value, int _weight, std::vector<Node> _adjList);
 
 void insert(Node newNode);
 void printNode();

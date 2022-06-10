@@ -6,40 +6,46 @@
 using namespace std;
 using adjacencyList = std::vector<Node>;
 
-Node::Node(int _value){
+// constructors
+Node::Node(int _value, int _weight){
   value = _value;
+  weight = _weight;
   adjacencyList empty = { };
   adjList = empty;
 }
 
-Node::Node(int _value, adjacencyList _adjList){
+Node::Node(int _value, int _weight, adjacencyList _adjList){
   value = _value;
+  weight = _weight;
   adjList = _adjList;
-}
-
-void Node::insert(Node newNode){
-  this->adjList.push_back(newNode);
 }
 
 Graph::Graph(adjacencyList _nodes){
   nodes = _nodes;
 }
 
+
+// methods
+void Node::insert(Node newNode){
+  this->adjList.push_back(newNode);
+}
+
 bool Graph::is_empty(){
   return nodes.empty();
 }
 
+
+// funcs to print nicely (or kind of nicely)
 void Node::printNode(){
   cout << "-------" << endl;
-  cout << "Parent: ";
-  cout << this->value << endl;
+  cout << "Parent - value: " << this->value << ",  weight: " << this-> weight << endl;
 
 
   if (!(this->adjList).empty()){
-    cout << "\n Children: ";
+    cout << "Children: " << endl;
     for (auto ptr = adjList.begin(); ptr < adjList.end(); ptr++){
-      cout << "Node w/ val";
-      cout << ptr->value << endl;
+      cout << "value & weight " << ptr-> value << "," << ptr->weight << endl;
+      //cout << ptr->value << endl;
     }
   }
 
