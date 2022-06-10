@@ -1,6 +1,6 @@
 #include "graphclass.cpp"
 
-//using adjVector = std::vector<std::vector<Node>>;
+using nodeList = std::vector<Node>;
 
 int main()
 {
@@ -26,11 +26,14 @@ int main()
     Node node1(1, 1), node2(2, 2), node3(3, 3), node4(4, 4);
     std::cout << "testing insert" << std::endl;
     node1.insert(node4);
-    node2.insert(node4);
-    node2.insert(node3);
+
+    nodeList for2 = {node4, node3};
+    node2.insert_multiple(for2);
+
+    nodeList for4 = {node1, node2};
+    node4.insert_multiple(for4);
+
     node3.insert(node2);
-    node4.insert(node1);
-    node4.insert(node2);
 
     std::vector<Node> _nodes = {node1, node2, node3, node4};
     Graph _graph(_nodes);
