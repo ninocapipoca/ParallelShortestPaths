@@ -7,6 +7,8 @@
 #define LIGHT 1
 #define HEAVY 2
 
+
+
 struct Request{
   // value
   // tentative cost + current cost (val assigned to node)
@@ -23,10 +25,11 @@ public:
   std::vector<Node> adjList;
   int kind;
 
-// bool operator == (Node node2) {
-//   return (value == node2.value && weight == node2.weight && adjList == node2.adjList && light == node2.light);
-// }
 
+bool check_equal_aux(Node node);
+bool operator==(const Node& rhs);
+
+void check();
 Node();
 Node(double _value, double _weight);
 Node(double _value, double _weight, std::vector<Node> _adjList);

@@ -39,6 +39,16 @@
 using nodeList = std::vector<Node>;
 using requestList = std::vector<Request>;
 
+// bool contained_in(Node target, nodeList set){ // check if target is in set
+//   for (auto ptr = set.begin(); ptr < set.end; ptr++){
+//     if (*ptr == target){
+//       return true;
+//     }
+//   }
+//
+//   return false;
+// }
+
 requestList findRequests(Graph graph, nodeList V_prime, bool kind){
   // if node is in the nodelist AND is of type [kind] then add it
   requestList request_set;
@@ -50,7 +60,7 @@ requestList findRequests(Graph graph, nodeList V_prime, bool kind){
 
   // ok. now all labelled. iterate through nodes and check conditions
   for (auto ptr = graph.nodes.begin(); ptr < graph.nodes.end(); ptr++){
-    if (ptr->light == NULL){ // if even 1 not assigned, return false
+    if (ptr->kind == UNASSIGNED){ // if even 1 not assigned, return false
       return false;
     }
   }

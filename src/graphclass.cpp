@@ -32,6 +32,31 @@ Graph::Graph(nodeList _nodes, double d){
   delta = d;
 }
 
+// overloading
+bool Node::check_equal_aux(Node rhs){
+  // checks some of the properties for equality
+  bool test_value = (rhs.value) == value;
+  bool test_weight = (rhs.weight) == weight;
+  bool test_kind = (rhs.kind) == kind;
+
+  return test_value && test_weight && test_kind ;
+}
+
+
+
+bool Node::operator==(const Node& rhs){
+  bool test_adjlist = true;
+  if (!this->check_equal_aux(rhs)){
+    // if any of the other properties don't match, directly false
+    return false;
+  }
+
+  // otherwise check that adjList is the same
+  for (auto ptr = this->adjList.begin(); ptr < this->adjlist.end(); ptr++){
+    this->adjList.push_back(*ptr); // CHECK: is this or a function call better?
+  }
+}
+
 
 // methods
 void Node::insert(Node newNode){ // CHECK: honestly not sure if it's worth having 2 separate methods
@@ -99,4 +124,20 @@ void Graph::printGraph(){
   for (auto ptr = nodes.begin(); ptr != nodes.end(); ptr++){
     ptr->printNode();
   }
+}
+
+
+// some attempts at stuff
+void check_value_rec(nodeList list, bool& res){
+  if (list.empty()){
+    return res;
+  }
+
+  bool temp = false;
+  for (auto ptr = list.begin(); ptr < list.end(); ptr++){
+    // iterate and check values correspond
+    
+
+  }
+
 }
