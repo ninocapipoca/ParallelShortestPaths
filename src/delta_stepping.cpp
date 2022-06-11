@@ -59,9 +59,18 @@ requestList findRequests(Graph graph, nodeList V_prime, bool kind){
   }
 
   // ok. now all labelled. iterate through nodes and check conditions
-  for (auto ptr = graph.nodes.begin(); ptr < graph.nodes.end(); ptr++){
-    if (ptr->kind == UNASSIGNED){ // if even 1 not assigned, return false
-      return false;
+  for (auto list_ptr = graph.nodes.begin(); list_ptr < graph.nodes.end(); list_ptr++){ // for all linked lists in graph
+    if (contains(V_prime, list_ptr->head) && (list_ptr->head).kind == kind){
+      //double t_value = tentative cost + current cost (val assigned to node)
+      Request new_request = Request();
+      request_set.push_back(list_ptr->head);
+    }
+
+    for (auto node_ptr = (*list_ptr).begin(); node_ptr < (*list_ptr).end(); node_ptr++){ // for all nodes in linked list
+      if (contains(V_prime, (*node_ptr)) && (*node_ptr).kind == kind){ // if node is in V prime
+        request_set.push_back((*node_ptr)); // add to set to return
+      }
     }
   }
+  return request_set;
 }

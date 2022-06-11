@@ -6,6 +6,8 @@
 using namespace std;
 using nodeList = std::vector<Node>;
 
+
+
 // constructors
 Node::Node(){
   value = 0;
@@ -51,7 +53,15 @@ bool Node::operator!=(const Node& rhs){
   return !((this->value == rhs.value) && (this->weight == rhs.weight) && (this->kind == rhs.kind));
 }
 
-
+// FUNCTIONS OUTSIDE OF ANY CLASS
+bool vect_contains(nodeList list, Node target){
+  for (auto ptr = list.begin(); ptr < list.end(); ptr++){
+    if ((*ptr) == target){
+      return true;
+    }
+  }
+  return false;
+}
 
 // methods
 void Node::assign(double delta){ // assigns a label of either 'light' or not to a single node
@@ -73,12 +83,10 @@ void linkedList::insert_multiple(nodeList newnodes){
 }
 
 bool linkedList::contains(Node target){ // verify if target node is in current linkedList
-  for (auto ptr = (this->list).begin(); ptr < (this->list).end(); ptr++){
-    if ((*ptr) == target){
-      return true;
-    }
+  if (this->head == target){
+    return true;
   }
-  return false;
+  return vect_contains(this->list, target);
 }
 
 void linkedList::assign(double delta){
