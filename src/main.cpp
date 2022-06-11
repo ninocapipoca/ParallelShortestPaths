@@ -1,49 +1,26 @@
 #include "graphclass.cpp"
 
 using nodeList = std::vector<Node>;
+using listVector = std::vector<linkedList>;
 
 int main()
 {
     std::cout << "running main" << std::endl;
 
-    //tester code for printing funcs
-    // Node node1(1);
-    // Node node2(2);
-    // Node node3(3);
-    //
-    //
-    // adjacencyList test = {node2, node3};
-    //
-    // node1.adjList = test;
-    // node1.printNode();
-    //
-    // std::cout << "-----------" << std::endl;
-    // std::vector<Node> list = {node1, node2, node3};
-    // printAdjList(list);
+    Node n1(1,1), n2(2,2), n3(3,3);
+    nodeList test1 = { n2, n3};
+    linkedList test = linkedList(n1, test1);
 
+    nodeList test2 = {n1, n3};
+    linkedList second_test = linkedList(n2, test2);
 
-    // tester code for graphs & printing them
-    Node node1(1, 1), node2(2, 2), node3(3, 3), node4(4, 4);
-    std::cout << "testing insert" << std::endl;
-    node1.insert(node4);
+    n1.printNode();
+    test.printLinkedList();
 
-    nodeList for2 = {node4, node3};
-    node2.insert_multiple(for2);
-
-    nodeList for4 = {node1, node2};
-    node4.insert_multiple(for4);
-
-    node3.insert(node2);
-
-    // Node eqNode = node2;
-    // std::cout << "testing equality" << endl;
-    // std::cout << eqNode.check_equal_address(node2) << endl;
-
-    std::vector<Node> _nodes = {node1, node2, node3, node4};
-    Graph _graph(_nodes);
-    std::cout << _graph.is_empty() << endl;
-    _graph.printGraph();
-
+    std::cout << "\n testing graph print \n" << std::endl;
+    listVector listvect = {test, second_test};
+    Graph test_graph = Graph(listvect, 1.5);
+    test_graph.printGraph();
 
 
     return 0;

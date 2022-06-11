@@ -8,7 +8,6 @@
 #define HEAVY 2
 
 
-
 struct Request{
   // value
   // tentative cost + current cost (val assigned to node)
@@ -17,41 +16,57 @@ struct Request{
   double t_weight;
 };
 
+
+
 class Node{
   // value is the number assigned to the VERTEX
   // weight is weight of the edge
 public:
   double value, weight;
-  std::vector<Node> adjList;
+  //std::vector<Node> adjList;
   int kind;
 
 
-bool check_equal_aux(Node node);
 bool operator==(const Node& rhs);
-bool check_equal_address(Node* rhs);
-bool adjList_eq(std::vector<Node>& list);
+bool operator!=(const Node& rhs);
 
 void check();
 Node();
 Node(double _value, double _weight);
-Node(double _value, double _weight, std::vector<Node> _adjList);
 
-void insert(Node newNode);
 void printNode();
-void insert_multiple(std::vector<Node> newnodes);
 void assign(double delta);
 };
 
-//using adjVector = std::vector<Node>; // define alias here, otherwise it's quite messy
+ // define alias here, otherwise it's quite messy
+using nodeList = std::vector<Node>;
+
+class linkedList{
+  Node head;
+  nodeList list;
+
+public:
+  linkedList(Node h);
+  linkedList(Node h, nodeList l);
+
+  void insert(Node newNode);
+  void insert_multiple(nodeList newnodes);
+  bool contains(Node target);
+  bool operator==(const linkedList& rhs);
+  void assign(double delta);
+  bool check_assigned();
+  void printLinkedList();
+
+};
 
 class Graph{
 public:
-  std::vector<Node> nodes;
+  std::vector<linkedList> nodes;
   double delta;
 
 Graph();
-Graph(std::vector<Node> _nodes);
-Graph(std::vector<Node> _nodes, double d);
+Graph(std::vector<linkedList> _nodes);
+Graph(std::vector<linkedList> _nodes, double d);
 void printGraph();
 bool is_empty();
 void assign();
