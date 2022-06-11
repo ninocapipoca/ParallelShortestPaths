@@ -44,17 +44,39 @@ bool Node::check_equal_aux(Node rhs){
 
 
 
-bool Node::operator==(const Node& rhs){
-  bool test_adjlist = true;
-  if (!this->check_equal_aux(rhs)){
-    // if any of the other properties don't match, directly false
-    return false;
-  }
+// bool Node::operator==(const Node& rhs){
+//   bool test_adjlist = true;
+//   if (!this->check_equal_aux(rhs)){
+//     // if any of the other properties don't match, directly false
+//     return false;
+//   }
+//
+//   // otherwise check that adjList is the same
+//   for (auto ptr = this->adjList.begin(); ptr < this->adjlist.end(); ptr++){
+//     this->adjList.push_back(*ptr); // CHECK: is this or a function call better?
+//   }
+// }
 
-  // otherwise check that adjList is the same
-  for (auto ptr = this->adjList.begin(); ptr < this->adjlist.end(); ptr++){
-    this->adjList.push_back(*ptr); // CHECK: is this or a function call better?
+
+// just realised why this code doesn't work.
+bool Node::check_equal_address(Node* rhs){
+  return (this == rhs);
+}
+
+bool Node::adjList_eq(nodeList& list){
+  for (auto ptr = this->adjList.begin(); ptr < this->adjList.end(); ptr++){
+    for (auto ptr_l = list.begin(); ptr_l < list.end(); ptr_l++){
+      if (ptr != ptr_l){
+        return false;
+      }
+    }
   }
+  return true;
+
+}
+
+bool Node::operator==(const Node& rhs){
+  return true; // TEMPORARY - just so this compiles
 }
 
 
@@ -128,16 +150,20 @@ void Graph::printGraph(){
 
 
 // some attempts at stuff
-void check_value_rec(nodeList list, bool& res){
-  if (list.empty()){
-    return res;
-  }
-
-  bool temp = false;
-  for (auto ptr = list.begin(); ptr < list.end(); ptr++){
-    // iterate and check values correspond
-    
-
-  }
-
-}
+// void Node::check_value_rec(nodeList list, bool& res){ // NOT IN HPP YET
+//   if (adjList.size() != list.size()){
+//     res = false;
+//   }
+//
+//   if (list.empty()){
+//     return res;
+//   }
+//
+//   bool temp = false;
+//   for (auto ptr = list.begin(); ptr < list.end(); ptr++){
+//     // iterate and check values correspond
+//
+//
+//   }
+//
+// }

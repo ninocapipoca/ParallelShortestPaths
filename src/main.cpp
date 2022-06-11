@@ -35,6 +35,10 @@ int main()
 
     node3.insert(node2);
 
+    // Node eqNode = node2;
+    // std::cout << "testing equality" << endl;
+    // std::cout << eqNode.check_equal_address(node2) << endl;
+
     std::vector<Node> _nodes = {node1, node2, node3, node4};
     Graph _graph(_nodes);
     std::cout << _graph.is_empty() << endl;

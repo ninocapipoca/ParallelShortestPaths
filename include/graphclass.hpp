@@ -28,6 +28,8 @@ public:
 
 bool check_equal_aux(Node node);
 bool operator==(const Node& rhs);
+bool check_equal_address(Node* rhs);
+bool adjList_eq(std::vector<Node>& list);
 
 void check();
 Node();
