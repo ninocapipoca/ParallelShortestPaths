@@ -3,6 +3,11 @@
 // TO DO - Implement sequential algorithm first maybe (or at least understand it)
 // TO DO - Implement parallel algorithm
 
+// NOTATION
+// c(v, w) is the cost of the edge between c and w
+// w is a vertex, v is a vertex
+// tent(v) is the tentative distance to v relative to some node
+
 // CONCEPTS
 // 1. Buckets
 // Buckets store vertices that are queued and have a tentative value within an interval
@@ -39,38 +44,87 @@
 using nodeList = std::vector<Node>;
 using requestList = std::vector<Request>;
 
-// bool contained_in(Node target, nodeList set){ // check if target is in set
-//   for (auto ptr = set.begin(); ptr < set.end; ptr++){
-//     if (*ptr == target){
-//       return true;
-//     }
-//   }
-//
-//   return false;
-// }
+// REQUEST STRUCT
+// start node, end node, cost of going from start to end, and tentative value
+// double t_value;
+// in order: t_value, start, end, cost
 
-requestList findRequests(Graph graph, nodeList V_prime, bool kind){
-  // if node is in the nodelist AND is of type [kind] then add it
-  requestList request_set;
+// NOTE - for a node, the 'weight' property describes the weight
+// of the edge to get to that node
 
-  // check that all nodes have been assigned a label
+// find all nodes that have an edge to dest. node
+// and the cost of those edges tent(source) + c(source, dest)
+int get_node_index(Node target, nodeList nodelist){
+  if (!contains(nodelist, target)){
+    return -1
+  }
+
+  for (int i = 0; i < nodelist.size(); i++){
+    if (nodelist[i] == target){
+      return i;
+    }
+  }
+}
+
+
+std::vector<std::pair<Node, int>> compute_leads_to(Node dest, Graph graph){
+// THIS IS BROKEN. NEEDS UPDATING.
+// also code not tested, likely doesn't work.
+
+
+  std::vector<std::pair<Node, int>> res = {};
+  for (int i = 0; i < graph.nodes.size(); i++ ){
+    // for every list of nodes
+    nodeList currlist = graph.nodes[i];
+
+    if (currlist.head == dest){ // don't check itself
+      continue;
+    }
+
+    for (int j = 0; j < currlist[i].size(); j++){
+      // if dest node is in [some node]'s adjacency list,
+      if (contains(currlist, dest)){ // add it
+        int index = get_node_index(dest);
+        int cost = currlist.edge_weights[index]; // get cost of going from source to dest
+        int tentative = currlist.head.value; //assigned distance of source
+
+        res.push_back(std::make_pair(currlist[j], tentative+cost));
+      }
+    }
+
+  }
+
+  return res;
+}
+
+std::vector<std::pair<Node, int>> findRequests(Graph graph, nodeList Vprime, int kind){
+  // returns set of (w, tent(v) + c(v, w)) s.t. v in V' and (v,w) edge is of type [kind]
+  std::vector<std::pair<Node, int>> request_set;
+
   if (!graph.check_assigned()){
     graph.assign(); // assign if needed
   }
 
-  // ok. now all labelled. iterate through nodes and check conditions
-  for (auto list_ptr = graph.nodes.begin(); list_ptr < graph.nodes.end(); list_ptr++){ // for all linked lists in graph
-    if (contains(V_prime, list_ptr->head) && (list_ptr->head).kind == kind){
-      //double t_value = tentative cost + current cost (val assigned to node)
-      Request new_request = Request();
-      request_set.push_back(list_ptr->head);
-    }
+  for (int i = 0; i < graph.nodes.size(); i++){ // for every list of nodes
+    for (int j = 0; j < graph.nodes[i].size(); j++){ // for every node
 
-    for (auto node_ptr = (*list_ptr).begin(); node_ptr < (*list_ptr).end(); node_ptr++){ // for all nodes in linked list
-      if (contains(V_prime, (*node_ptr)) && (*node_ptr).kind == kind){ // if node is in V prime
-        request_set.push_back((*node_ptr)); // add to set to return
+      if ((kind == LIGHT && graph.nodes[i].value <= graph.delta) || ((kind == HEAVY) && graph.nodes[i].value > graph.delta)){
+        // criterion #1 hit! it is of the correct kind
+        if (contains(Vprime, graph.nodes[i])){ // if node is in Vprime
+          // criterion #2 hit!
+
+          // add it to the request set
+          std::vector<std::pair<Node, int>> connected = compute_leads_to(graph.nodes[i], graph);
+          for (auto it = connected.begin(); it < connected.end(); it++){
+            request_set.push_back(*it);
+          }
+
+        }
+
       }
+
     }
   }
   return request_set;
+
 }
