@@ -23,24 +23,11 @@ vector<int> tent;
 
 
 //In step one we want to find the globaly mimnimal L
-int global_L = INT_MAX;
+int global_L = INT_MAX;//this will be the only part that is exclusive read/write
 std::mutex global_L_mutex;
 
 
-//finds minimal L by comparing the global L to the local distances in the 
-//q,q_star pairs
-void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end){
-    while(start!=end){
-        auto curDist = start->top().first;
-        auto curNode = start->top().second;
-        global_L_mutex.lock();
-        if(curDist<global_L){
-            global_L = curDist;
-        }
-        global_L_mutex.unlock();
-        start++;
-    }
-}
+
 //try to implement using Fibonnaci heap, if doesn't work, use min heap
 
 typedef std::priority_queue<pair<int,int>, vector<pair<int,int>>,
@@ -71,6 +58,8 @@ class Graph{
 std::pair<vector<int>,vector<int>> parallel_dijkstra (Graph g, int source,
 vector<MinHeap>::iterator start, vector<MinHeap>::iterator end );
 
+void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end);
+
 void can_be_deleted();
 
 
@@ -100,16 +89,23 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
         for(int j=0; j<num_threads;j++){
             if(!q_and_q_star[j].empty()){
                 auto endIter = startIter + block_size;
-                workers[j] = std::thread(find_mininmal_L,g,source,startIter,endIter);
+                workers[j] = std::thread(&find_mininmal_L,g,source+j*block_size
+                ,startIter,endIter);//this is first step
             }
+            startIter = startIter + j*block_size;
         }
+        for (size_t i = 0; i < num_threads - 1; ++i) {
+            workers[i].join();
+        }
+        //Here I should implement step 2
     }
 }
 
 
 
 //remove if not minimal
-std::pair<vector<int>,vector<int> > remove_not_minimal(Graph g, int source,int dist_source, vector<MinHeap>::iterator start,
+std::pair<vector<int>,vector<int> > remove_not_minimal(Graph g, int source,
+int dist_source, vector<MinHeap>::iterator start,
  vector<MinHeap>::iterator end){
     int length = std::distance(start,end);
     MinHeap minHeap;
@@ -171,4 +167,19 @@ vector<MinHeap>::iterator start, vector<MinHeap>::iterator end ){
         }
     }
     return {dist, prev};
+}
+
+//finds minimal L by comparing the global L to the local distances in the 
+//q,q_star pairs
+void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end){
+    while(start!=end){
+        auto curDist = start->top().first;
+        auto curNode = start->top().second;
+        global_L_mutex.lock();
+        if(curDist<global_L){
+            global_L = curDist;
+        }
+        global_L_mutex.unlock();
+        start++;
+    }
 }
