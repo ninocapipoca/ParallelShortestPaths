@@ -10,8 +10,9 @@
 #include <numeric>
 #include <boost/pending/relaxed_heap.hpp>
 #include <iterator>
+#include <limits>
 
-#define INT_MAX 999
+#define INT_MAX std::numeric_limits<int>::max()
 
 using std::vector;
 using std::pair;
@@ -25,13 +26,21 @@ vector<int> tent;
 int global_L = INT_MAX;
 std::mutex global_L_mutex;
 
-void find_mininmal_L(Graph g, int source,
-vector<MinHeap>::iterator start, vector<MinHeap>::iterator end);
 
-// typedef relaxed_heap<Vertex, IndirectCmp, IndexMap> MutableQueue;
-
-
-
+//finds minimal L by comparing the global L to the local distances in the 
+//q,q_star pairs
+void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end){
+    while(start!=end){
+        auto curDist = start->top().first;
+        auto curNode = start->top().second;
+        global_L_mutex.lock();
+        if(curDist<global_L){
+            global_L = curDist;
+        }
+        global_L_mutex.unlock();
+        start++;
+    }
+}
 //try to implement using Fibonnaci heap, if doesn't work, use min heap
 
 typedef std::priority_queue<pair<int,int>, vector<pair<int,int>>,
@@ -81,49 +90,64 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
     //vector of pairs of vectors
     //each pair consists of a distance and a node vector
     //each pair is managed by one of the threads
+    //all queues are initialized empty;
 
 
-    for(size_t i=0; i<num_threads-1; ++i){
-        auto endIter = startIter + block_size;
-        // the paper says there should be two queues maintained by each "processor"
-        workers[i] = std::thread(&parallel_dijkstra,
-        g,startIter,startIter,endIter, std::ref(q_and_q_star[i]));
-        startIter = endIter;
-        //so far we cut dijkstra into pieces and let each piece be managed by 
-        //a single thread.
-        //how do we paste it all together to get a coherent solution?/'[]
-    }
-    parallel_dijkstra(g,startIter,startIter,,)
-    for (size_t i = 0; i < num_threads - 1; ++i) {
-        workers[i].join();
-    }
-}
+    q_and_q_star[0].push({0,source});//adding source node and it's distance
+    //from the source, which is 0.
 
-
-//finds minimal L by comparing the global L to the local distances in the 
-//q,q_star pairs
-void find_mininmal_L(Graph g, int source,
-vector<MinHeap>::iterator start, vector<MinHeap>::iterator end){
-    while(start!=end){
-        auto curDist = start->top().first;
-        auto curNode = start->top().second;
-        global_L_mutex.lock();
-        if(curDist<global_L){
-            global_L = curDist;
+    while(!q_and_q_star.empty()){//as the paper states
+        for(int j=0; j<num_threads;j++){
+            if(!q_and_q_star[j].empty()){
+                auto endIter = startIter + block_size;
+                workers[j] = std::thread(find_mininmal_L,g,source,startIter,endIter);
+            }
         }
-        global_L_mutex.unlock();
-        start++;
     }
 }
 
-std::pair<vector<int>,vector<int>> parallel_dijkstra (Graph g, int source,
+
+
+//remove if not minimal
+std::pair<vector<int>,vector<int> > remove_not_minimal(Graph g, int source,int dist_source, vector<MinHeap>::iterator start,
+ vector<MinHeap>::iterator end){
+    int length = std::distance(start,end);
+    MinHeap minHeap;
+    vector<int> dist(length-1, INT_MAX);
+    vector<int> prev(length-1, -1);
+    vector<bool> visited(length-1, false);
+
+    dist[source] = dist_source;
+    minHeap.push({dist_source, source});
+
+    while(!minHeap.empty()){
+        auto curDist = minHeap.top().first;
+        auto curNode = minHeap.top().second;
+        minHeap.pop();
+        if(visited[curNode]) continue;
+        for (auto &x: g.adj[curNode]){//first is node second is weight
+            auto nextNode = x.first;
+            auto nextWeight = x.second;
+            int nextDist = curDist + nextWeight;
+            if(not (visited[nextNode]) and (nextDist < global_L)){
+                dist[nextNode] = nextDist;
+                prev[nextNode] = curNode;
+                minHeap.push({nextDist, nextNode});
+            }
+        }
+    }
+    return {dist, prev};
+
+}
+
+std::pair<vector<int>,vector<int> > parallel_dijkstra (Graph g, int source,
 vector<MinHeap>::iterator start, vector<MinHeap>::iterator end ){
 
 
     int length = std::distance(start,end);
     //distance from a source to itself should be zero
     MinHeap minHeap;
-    vector<int> dist(length-1, INT_MAX);//should decide on a constraint for INT_MAX
+    vector<int> dist(length-1, INT_MAX);
     vector<int> prev(length-1, -1);
     vector<bool> visited(length-1, false);
 
