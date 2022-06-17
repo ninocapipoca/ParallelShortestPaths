@@ -19,12 +19,18 @@ using std::pair;
 //the algorithm keeps a global array for all tentative distance values
 //each processor is responsible for two sequential priority queues
 
-vector<int> tent;
+
+//we conseptioally have 3 vectors: tentative,queued,setelled
+//practically, setelled is the output
+
+// vector<pair<int, int> > tent;//this is the tentetive weight vector, first 
+// //elemnt is the number of the vertex, second is the distance from the source
 
 
 //In step one we want to find the globaly mimnimal L
 int global_L = INT_MAX;//this will be the only part that is exclusive read/write
 std::mutex global_L_mutex;
+std::mutex global_request_mutex;
 
 
 
@@ -32,6 +38,11 @@ std::mutex global_L_mutex;
 
 typedef std::priority_queue<pair<int,int>, vector<pair<int,int>>,
     std::greater<pair<int,int>>> MinHeap;
+typedef int Node;
+typedef int Weight;
+typedef int Distance;
+typedef vector<pair<Node, Distance> > ReqSet;
+typedef vector<Distance> Tent;
 
 
 //this graph implementation is taken from Shiran Afergan's video on Dijkstra's
@@ -42,6 +53,7 @@ typedef std::priority_queue<pair<int,int>, vector<pair<int,int>>,
 class Graph{
     public:
         vector<vector<std::pair<int, int>>> adj;
+        vector<vector<std::pair<int, int>>> buf;//gonna use later according to the buffers on the paper
         int nNodes;
         void generateGraph(vector<vector<int>> &input, int n){
             nNodes = n;
@@ -68,9 +80,9 @@ void can_be_deleted();
 //should be preformed in Ologp <= Ologn time 
 void parallel_coordinator(size_t num_threads,Graph g, int source){
     
-    unsigned long const block_size = tent.size()/num_threads;//do we add -1 to vectors?
-    auto startIter = tent.begin();//I should make sure that start iter
-    //is the source for each of the queue pairs 
+    unsigned long const block_size = g.adj.size()/num_threads;//do we add -1 to vectors?
+    // auto startIter = tent.begin();//I should make sure that start iter
+    // // is the source for each of the queue pairs 
     
     vector<std::thread> workers(num_threads - 1);//excluding the thread we 
     // vector<pair<vector<int>,vector<int> > > q
@@ -80,10 +92,19 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
     //each pair consists of a distance and a node vector
     //each pair is managed by one of the threads
     //all queues are initialized empty;
-
-
     q_and_q_star[0].push({0,source});//adding source node and it's distance
     //from the source, which is 0.
+
+    Tent tent(g.adj.size());//it is not stated clearly at the paper
+    // but I assume that this vector should be constatnly maintained
+    for(int weight:tent){
+        tent[weight] = INT_MAX;
+    }
+    tent[source]  = 0;
+    //at the first iteration the distance of all nodes from the source is 
+    //the maximum available
+
+    auto startIter = q_and_q_star.begin();
 
     while(!q_and_q_star.empty()){//as the paper states
         for(int j=0; j<num_threads;j++){
@@ -98,22 +119,38 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
             workers[i].join();
         }
         //Here I should implement step 2
+        vector<pair<int,int> > requests;
+        for(int j=0; j<num_threads; j++){
+            if(!q_and_q_star[j].empty()){
+                auto endIter = startIter + block_size;
+                workers[j] = std::thread(&remove_not_minimal,g,
+                source+j*block_size,startIter,endIter, std::ref(requests),
+                std::ref(q_and_q_star));
+            }
+        }
+        for(size_t i = 0 ; i< num_threads - 1; ++i){
+            workers[i].join();
+        }
+        for(int j=0; j<num_threads; j++){
+            workers[j] = std::thread(&)
+        }
     }
 }
 
 
 
 //remove if not minimal
-std::pair<vector<int>,vector<int> > remove_not_minimal(Graph g, int source,
+std::pair<vector<int>,vector<int> > remove_not_minimal(Graph g, int source, vector<int> tent,
 int dist_source, vector<MinHeap>::iterator start,
- vector<MinHeap>::iterator end){
+ vector<MinHeap>::iterator end, vector<pair<int,int> > requests){
     int length = std::distance(start,end);
     MinHeap minHeap;
     vector<int> dist(length-1, INT_MAX);
     vector<int> prev(length-1, -1);
     vector<bool> visited(length-1, false);
 
-    dist[source] = dist_source;
+    // dist[source] = dist_source;
+    
     minHeap.push({dist_source, source});
 
     while(!minHeap.empty()){
@@ -130,12 +167,19 @@ int dist_source, vector<MinHeap>::iterator start,
                 prev[nextNode] = curNode;
                 minHeap.push({nextDist, nextNode});
             }
+            else{
+                global_request_mutex.lock();
+                requests.push_back({nextNode,nextDist});
+                global_request_mutex.unlock();
+            }
         }
     }
     return {dist, prev};
 
 }
 
+
+//delete later
 std::pair<vector<int>,vector<int> > parallel_dijkstra (Graph g, int source,
 vector<MinHeap>::iterator start, vector<MinHeap>::iterator end ){
 
@@ -181,5 +225,22 @@ void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector
         }
         global_L_mutex.unlock();
         start++;
+    }
+}
+
+void maintain_tent(vector<int> tent){
+
+}
+
+ReqSet gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start, vector<pair<int,int> >::iterator end, vector<pair<int,int> > requests, Tent tent){
+    ReqSet req_set;
+    while(start!=end){
+        for(auto& x : g.adj[start->first]){
+            auto nextNode = x.first;
+            auto nextWeight = x.second;
+            global_request_mutex.lock();
+            set.push_back({start->first,tent[start->first]+nextWeight});
+            global_request_mutex.unlock();
+        }
     }
 }
