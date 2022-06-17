@@ -77,6 +77,8 @@ void gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start,
 vector<pair<int,int> >::iterator end,vector<pair<int,int> > requests,Tent tent);
 void place_into_buffer(Graph g,ReqSet set,ReqSet::iterator start,
 ReqSet::iterator end,vector<std::mutex> mutex_vec);
+void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i,
+vector<std::mutex> mutex_vec, MinHeap queue);
 
 
 //four steps of a phse according to the paper:
@@ -110,9 +112,11 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
 
     auto startIter = q_and_q_star.begin();
 
-    vector<std::mutex> mutex_vec(g.adj.size());
+    vector<std::mutex> mutex_buf_vec(g.adj.size());
+    vector<std::mutex> mutex_tent_vec(tent.size());
 
     while(!q_and_q_star.empty()){//as the paper states
+        global_L = INT_MAX;
         for(int j=0; j<num_threads-1;j++){//maybe put num_threads-1?
             if(!q_and_q_star[j].empty()){
                 auto endIter = startIter + block_size;
@@ -159,14 +163,26 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
         for(int j=0; j<num_threads-1;j++){
             auto endIter_req = startIter_req + block_size_req;
             workers[j] = std::thread(&place_into_buffer,std::ref(g),
-            req,startIter_req,endIter_req,std::ref(mutex_vec));
+            req,startIter_req,endIter_req,std::ref(mutex_buf_vec));
             startIter_req = endIter_req;
         }
         place_into_buffer(std::ref(g),req,startIter_req,req.end(),
-        std::ref(mutex_vec));
+        std::ref(mutex_buf_vec));
         for(size_t i = 0 ; i< num_threads - 1; ++i){
             workers[i].join();
         }
+        // /void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i, vector<std::mutex> mutex_vec, MinHeap queue)
+        int j;
+        for(j=0; j<num_threads-1;j++){
+            workers[j] = std::thread(&update_tent,g,std::ref(tent),g.buf[j],std::ref(mutex_tent_vec),q_and_q_star[j]);
+        }
+        j++;
+        update_tent(g,std::ref(tent),g.buf[j],std::ref(mutex_tent_vec),q_and_q_star[j]);
+        for(size_t i = 0 ; i< num_threads - 1; ++i){
+            workers[i].join();
+        }
+        //now I need to get out the finished queue, maybe also use lazy copy
+        //to keep track of which nodes were already visited
     }
 }
 
@@ -228,5 +244,17 @@ ReqSet::iterator end,vector<std::mutex> mutex_vec){
         g.buf[start->first].push_back({start->first,start->second});
         start++;
         mutex_vec[temp].unlock();
+    }
+}
+
+void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i, vector<std::mutex> mutex_vec, MinHeap queue){
+    for(auto& request : buf_i ){
+        mutex_vec[request.first].lock();
+        if(request.second<tent[request.first]){
+            tent[request.first] = request.second;
+            queue.push({request.second,request.first});//we push all of them into the queue and then delete them with
+            //lazy deletion or just delete them as directed in step 2
+        }
+        mutex_vec[request.first].unlock();
     }
 }
