@@ -11,6 +11,13 @@ using std::pair;
 
 typedef std::priority_queue<pair<int,int>, vector<pair<int,int>>,
     std::greater<pair<int,int>>> MinHeap;
+//The heap sorting criteria will be the distance as indicated in the paper
+
+
+//this implementation is taken from Shiran Afergan's video on Dijkstra's
+//algorithm on Youtube: 
+//https://www.youtube.com/watch?v=pLElbKBc4RU&t=169s&ab_channel=ShiranAfergan
+
 
 class sequentialGraph{
     public:

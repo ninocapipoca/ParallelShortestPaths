@@ -70,9 +70,15 @@ class Graph{
 std::pair<vector<int>,vector<int>> parallel_dijkstra (Graph g, int source,
 vector<MinHeap>::iterator start, vector<MinHeap>::iterator end );
 
-void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end);
-
-void can_be_deleted();
+void find_mininmal_L(Graph g,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end);
+void remove_not_minimal(Graph g, vector<int> tent, vector<MinHeap>::iterator start,
+ vector<MinHeap>::iterator end, vector<pair<int,int> > requests);
+void gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start,
+vector<pair<int,int> >::iterator end,vector<pair<int,int> > requests,Tent tent);
+void place_into_buffer(Graph g,ReqSet set,ReqSet::iterator start,
+ReqSet::iterator end,vector<std::mutex> mutex_vec);
+void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i,
+vector<std::mutex> mutex_vec, MinHeap queue);
 
 
 //four steps of a phse according to the paper:
@@ -106,116 +112,103 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
 
     auto startIter = q_and_q_star.begin();
 
+    vector<std::mutex> mutex_buf_vec(g.adj.size());
+    vector<std::mutex> mutex_tent_vec(tent.size());
+
     while(!q_and_q_star.empty()){//as the paper states
-        for(int j=0; j<num_threads;j++){
+        global_L = INT_MAX;
+        for(int j=0; j<num_threads-1;j++){//maybe put num_threads-1?
             if(!q_and_q_star[j].empty()){
                 auto endIter = startIter + block_size;
-                workers[j] = std::thread(&find_mininmal_L,g,source+j*block_size
-                ,startIter,endIter);//this is first step
+                workers[j] = std::thread(&find_mininmal_L,g,startIter,endIter);//this is first step
             }
-            startIter = startIter + j*block_size;
+            startIter = q_and_q_star.begin() + j*block_size;
         }
+        find_mininmal_L(g,startIter,q_and_q_star.end());
         for (size_t i = 0; i < num_threads - 1; ++i) {
             workers[i].join();
         }
         //Here I should implement step 2
         vector<pair<int,int> > requests;
-        for(int j=0; j<num_threads; j++){
+        startIter = q_and_q_star.begin();
+        for(int j=0; j<num_threads-1; j++){//maybe put num_threads-1?
             if(!q_and_q_star[j].empty()){
                 auto endIter = startIter + block_size;
-                workers[j] = std::thread(&remove_not_minimal,g,
-                source+j*block_size,startIter,endIter, std::ref(requests),
+                workers[j] = std::thread(&remove_not_minimal,g,tent,startIter,
+                endIter, std::ref(requests),
                 std::ref(q_and_q_star));
             }
+            startIter = q_and_q_star.begin() + j*block_size;
         }
+        remove_not_minimal(g,tent,startIter,q_and_q_star.end(),
+        std::ref(requests));
         for(size_t i = 0 ; i< num_threads - 1; ++i){
             workers[i].join();
         }
-        for(int j=0; j<num_threads; j++){
-            workers[j] = std::thread(&)
+        ReqSet req;
+        auto startIter_requests = requests.begin();
+        int block_size_requests = requests.size()/num_threads;
+        for(int j=0; j<num_threads-1; j++){//maybe put num_threads-1?
+            auto endIter_requests = startIter_requests + block_size_requests;
+            workers[j] = std::thread(&gen_req_set,g,std::ref(req),startIter_requests,
+            endIter_requests,requests,tent);
+            startIter_requests = endIter_requests;
         }
+        gen_req_set(g,std::ref(req),startIter_requests,requests.end(),requests,tent);
+        for(size_t i = 0 ; i< num_threads - 1; ++i){
+            workers[i].join();
+        }
+        auto startIter_req = req.begin();
+        int block_size_req = req.size()/num_threads;
+        for(int j=0; j<num_threads-1;j++){
+            auto endIter_req = startIter_req + block_size_req;
+            workers[j] = std::thread(&place_into_buffer,std::ref(g),
+            req,startIter_req,endIter_req,std::ref(mutex_buf_vec));
+            startIter_req = endIter_req;
+        }
+        place_into_buffer(std::ref(g),req,startIter_req,req.end(),
+        std::ref(mutex_buf_vec));
+        for(size_t i = 0 ; i< num_threads - 1; ++i){
+            workers[i].join();
+        }
+        // /void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i, vector<std::mutex> mutex_vec, MinHeap queue)
+        int j;
+        for(j=0; j<num_threads-1;j++){
+            workers[j] = std::thread(&update_tent,g,std::ref(tent),g.buf[j],std::ref(mutex_tent_vec),q_and_q_star[j]);
+        }
+        j++;
+        update_tent(g,std::ref(tent),g.buf[j],std::ref(mutex_tent_vec),q_and_q_star[j]);
+        for(size_t i = 0 ; i< num_threads - 1; ++i){
+            workers[i].join();
+        }
+        //now I need to get out the finished queue, maybe also use lazy copy
+        //to keep track of which nodes were already visited
     }
 }
 
 
 
 //remove if not minimal
-std::pair<vector<int>,vector<int> > remove_not_minimal(Graph g, int source, vector<int> tent,
-int dist_source, vector<MinHeap>::iterator start,
- vector<MinHeap>::iterator end, vector<pair<int,int> > requests){
-    int length = std::distance(start,end);
-    MinHeap minHeap;
-    vector<int> dist(length-1, INT_MAX);
-    vector<int> prev(length-1, -1);
-    vector<bool> visited(length-1, false);
-
-    // dist[source] = dist_source;
-    
-    minHeap.push({dist_source, source});
-
-    while(!minHeap.empty()){
-        auto curDist = minHeap.top().first;
-        auto curNode = minHeap.top().second;
-        minHeap.pop();
-        if(visited[curNode]) continue;
-        for (auto &x: g.adj[curNode]){//first is node second is weight
-            auto nextNode = x.first;
-            auto nextWeight = x.second;
-            int nextDist = curDist + nextWeight;
-            if(not (visited[nextNode]) and (nextDist < global_L)){
-                dist[nextNode] = nextDist;
-                prev[nextNode] = curNode;
-                minHeap.push({nextDist, nextNode});
-            }
-            else{
-                global_request_mutex.lock();
-                requests.push_back({nextNode,nextDist});
-                global_request_mutex.unlock();
-            }
+void remove_not_minimal(Graph g,vector<int> tent,
+vector<MinHeap>::iterator start,
+vector<MinHeap>::iterator end,vector<pair<int,int> > requests){
+    while(start!=end){
+        auto curDist = start->top().first;
+        auto curNode = start->top().second;
+        if(tent[curNode]<=global_L){
+            global_request_mutex.lock();
+            requests.push_back({curNode,curDist});
+            start->pop();
+            global_request_mutex.unlock();
         }
+        start++;
     }
-    return {dist, prev};
-
-}
-
-
-//delete later
-std::pair<vector<int>,vector<int> > parallel_dijkstra (Graph g, int source,
-vector<MinHeap>::iterator start, vector<MinHeap>::iterator end ){
-
-
-    int length = std::distance(start,end);
-    //distance from a source to itself should be zero
-    MinHeap minHeap;
-    vector<int> dist(length-1, INT_MAX);
-    vector<int> prev(length-1, -1);
-    vector<bool> visited(length-1, false);
-
-    dist[source] = 0;
-    minHeap.push({0, source});
-
-    while(!minHeap.empty()){
-        auto curDist = minHeap.top().first;
-        auto curNode = minHeap.top().second;
-        minHeap.pop();
-        if(visited[curNode]) continue;
-        for (auto &x: g.adj[curNode]){//first is node second is weight
-            auto nextNode = x.first;
-            auto nextWeight = x.second;
-            int nextDist = curDist + nextWeight;
-            if(not (visited[nextNode]) and (nextDist< dist[nextNode])){
-                dist[nextNode] = nextDist;
-                prev[nextNode] = curNode;
-                minHeap.push({nextDist, nextNode});
-            }
-        }
-    }
-    return {dist, prev};
 }
 
 //finds minimal L by comparing the global L to the local distances in the 
 //q,q_star pairs
-void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end){
+void find_mininmal_L(Graph g,vector<MinHeap>::iterator start,
+vector<MinHeap>::iterator end){
     while(start!=end){
         auto curDist = start->top().first;
         auto curNode = start->top().second;
@@ -228,12 +221,9 @@ void find_mininmal_L(Graph g, int source,vector<MinHeap>::iterator start, vector
     }
 }
 
-void maintain_tent(vector<int> tent){
-
-}
-
-ReqSet gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start, vector<pair<int,int> >::iterator end, vector<pair<int,int> > requests, Tent tent){
-    ReqSet req_set;
+void gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start,
+vector<pair<int,int> >::iterator end, vector<pair<int,int> > requests,
+Tent tent){
     while(start!=end){
         for(auto& x : g.adj[start->first]){
             auto nextNode = x.first;
@@ -242,5 +232,29 @@ ReqSet gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start, 
             set.push_back({start->first,tent[start->first]+nextWeight});
             global_request_mutex.unlock();
         }
+        start++;
+    }
+}
+
+void place_into_buffer(Graph g,ReqSet set,ReqSet::iterator start,
+ReqSet::iterator end,vector<std::mutex> mutex_vec){
+    while(start!=end){
+        mutex_vec[start->first].lock();
+        int temp = start->first;
+        g.buf[start->first].push_back({start->first,start->second});
+        start++;
+        mutex_vec[temp].unlock();
+    }
+}
+
+void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i, vector<std::mutex> mutex_vec, MinHeap queue){
+    for(auto& request : buf_i ){
+        mutex_vec[request.first].lock();
+        if(request.second<tent[request.first]){
+            tent[request.first] = request.second;
+            queue.push({request.second,request.first});//we push all of them into the queue and then delete them with
+            //lazy deletion or just delete them as directed in step 2
+        }
+        mutex_vec[request.first].unlock();
     }
 }
