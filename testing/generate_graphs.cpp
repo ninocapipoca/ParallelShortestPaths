@@ -71,7 +71,7 @@ void print_mat(vector<vector<pair<int,int>>> input_mat){
   }
 }
 
-sequentialGraph generate_sequentialGraph(int maxint){
+sequentialGraph generate_sequentialGraph(int maxint){ // BROKEN FUNCTION - to be fixed soon
   sequentialGraph result = sequentialGraph();
   vector<int> random_starts = generate_random_intlist(maxint);
   vector<int> random_dests = generate_random_intlist(maxint);
@@ -82,10 +82,15 @@ sequentialGraph generate_sequentialGraph(int maxint){
   cout << " we made it!" << endl;
 
   for (int i = 0; i < maxint; i++){
+    cout << "inside the loop " << i << endl;
     vector<int> row = {random_starts[i], random_dests[i], random_weights[i]};
+    cout << "row created" << endl;
     print_int_vect(row);
+    cout << "row printed" << endl;
     for (int j = 0; j < 3; j++){
+      cout << "pushing back.. " << j << endl;
       input[i].push_back(row[j]);
+      cout << "pushed" << endl;
     }
 
   }
