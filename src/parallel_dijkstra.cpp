@@ -23,7 +23,7 @@ using std::pair;
 //we conseptioally have 3 vectors: tentative,queued,setelled
 //practically, setelled is the output
 
-// vector<pair<int, int> > tent;//this is the tentetive weight vector, first 
+// vector<pair<int, int> > tent;//this is the tentetive weight vector, first
 // //elemnt is the number of the vertex, second is the distance from the source
 
 
@@ -46,9 +46,8 @@ typedef vector<Distance> Tent;
 
 
 //this graph implementation is taken from Shiran Afergan's video on Dijkstra's
-//algorithm on Youtube: 
+//algorithm on Youtube:
 //https://www.youtube.com/watch?v=pLElbKBc4RU&t=169s&ab_channel=ShiranAfergan
-
 
 class Graph{
     public:
@@ -83,14 +82,14 @@ vector<std::mutex> mutex_vec, MinHeap queue);
 
 //four steps of a phse according to the paper:
 //step1: find the global minumum L of all elements in all Q_star queues
-//should be preformed in Ologp <= Ologn time 
+//should be preformed in Ologp <= Ologn time
 void parallel_coordinator(size_t num_threads,Graph g, int source){
-    
+
     unsigned long const block_size = g.adj.size()/num_threads;//do we add -1 to vectors?
     // auto startIter = tent.begin();//I should make sure that start iter
-    // // is the source for each of the queue pairs 
-    
-    vector<std::thread> workers(num_threads - 1);//excluding the thread we 
+    // // is the source for each of the queue pairs
+
+    vector<std::thread> workers(num_threads - 1);//excluding the thread we
     // vector<pair<vector<int>,vector<int> > > q
     // (num_threads-1, pair<vector<int>,vector<int> >(block_size-1,block_size-1));
     vector<MinHeap> q_and_q_star(num_threads-1);//vector of priority queue pairs realized by a heap
@@ -107,7 +106,7 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
         tent[weight] = INT_MAX;
     }
     tent[source]  = 0;
-    //at the first iteration the distance of all nodes from the source is 
+    //at the first iteration the distance of all nodes from the source is
     //the maximum available
 
     auto startIter = q_and_q_star.begin();
@@ -205,7 +204,7 @@ vector<MinHeap>::iterator end,vector<pair<int,int> > requests){
     }
 }
 
-//finds minimal L by comparing the global L to the local distances in the 
+//finds minimal L by comparing the global L to the local distances in the
 //q,q_star pairs
 void find_mininmal_L(Graph g,vector<MinHeap>::iterator start,
 vector<MinHeap>::iterator end){

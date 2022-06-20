@@ -15,7 +15,7 @@ typedef std::priority_queue<pair<int,int>, vector<pair<int,int>>,
 
 
 //this implementation is taken from Shiran Afergan's video on Dijkstra's
-//algorithm on Youtube: 
+//algorithm on Youtube:
 //https://www.youtube.com/watch?v=pLElbKBc4RU&t=169s&ab_channel=ShiranAfergan
 
 
@@ -36,6 +36,7 @@ class sequentialGraph{
 
 
     sequentialGraph();
+    sequentialGraph(vector<vector<int>> &input, int n);
 };
 
 sequentialGraph::sequentialGraph(){
@@ -43,6 +44,11 @@ sequentialGraph::sequentialGraph(){
   nNodes = 0;
   vector<vector<std::pair<int, int>>> empty = {{}};
   adj = empty;
+}
+
+sequentialGraph::sequentialGraph(vector<vector<int>> &input, int n){
+  nNodes = n;
+  this->generateGraph(input, n);
 }
 
 std::pair<vector<int>,vector<int>> dijkstra(sequentialGraph g, int source){

@@ -64,50 +64,43 @@ void print_pair_vect(vector<pair<int, int>> input_vect){
   }
 
 
-void print_mat(vector<vector<pair<int,int>>> input_mat){
-  cout << "sizes: " << input_mat.size() << "x" << input_mat[0].size() << endl;  
-  for (int i = 0; i < input_mat.size(); i++){
-    for (int j = 0; j < input_mat[0].size(); j++){
-      cout << "pair at " << i << "," << j << input_mat[i][j].first << input_mat[i][j].second << endl;
-    }
-  }
-  cout << "end of print" << endl;
-}
+// for debugging purposes
+// void print_mat(vector<vector<pair<int,int>>> input_mat){
+//   // this function causes a segfault
+//   cout << "sizes: " << input_mat.size() << "x" << input_mat[0].size() << endl;
+//   for (int i = 0; i < input_mat.size(); i++){
+//     for (int j = 0; j < input_mat[0].size(); j++){
+//       cout << "pair at " << i << "," << j << input_mat[i][j].first << input_mat[i][j].second << endl;
+//     }
+//   }
+//   cout << "end of print" << endl;
+// }
 
-sequentialGraph generate_sequentialGraph(int maxint){ // BROKEN FUNCTION - to be fixed soon
+sequentialGraph generate_sequentialGraph(int maxint){
+  //generates a graph for sequential implementation of dijkistra
+  // pretty sure this works now
+
   sequentialGraph result = sequentialGraph();
   vector<int> random_starts = generate_random_intlist(maxint);
   vector<int> random_dests = generate_random_intlist(maxint);
   vector<int> random_weights = generate_random_intlist(maxint);
   vector<vector<int>> input(maxint);
-  cout << "random starts, dests and weights are" << endl;
-  print_int_vect(random_starts);
-  cout << "\n" << endl;
-  print_int_vect(random_dests);
-  cout << "\n" << endl;
-  print_int_vect(random_weights);
-  cout << "\n" << endl;
-  cout << " we made it!" << endl;
-  cout << "input size is" << input.size() << "x" << input[0].size() << endl;
+
 
   for (int i = 0; i < maxint; i++){
-    cout << "inside the loop " << i << endl;
     vector<int> row = {random_starts[i], random_dests[i], random_weights[i]};
     for (int j = 0; j < 3; j++){
-      cout << "pushing back.. " << j << endl;
       input[i].push_back(row[j]);
-      cout << "pushed" << endl;
     }
 
 
   }
 
-  cout << "printing input matrix" << endl;
-  for (int i = 0; i < input.size(); i++){
-    for (int j = 0; j < input[0].size(); j++){
-      cout << "pos " << i << "," << j << ": " << input[i][j] << endl;
-    }
-}
+  // for (int i = 0; i < input.size(); i++){
+  //   for (int j = 0; j < input[0].size(); j++){
+  //     cout << "pos " << i << "," << j << ": " << input[i][j] << endl;
+  //   }
+// }
   result.generateGraph(input, maxint);
 
 return result;
@@ -116,15 +109,33 @@ return result;
 
 
 
-int main(){
+int main(){ // testing graph generation
   bool sequential = true;
   int maxint = 5;
+  int to_generate = 10;
 
   if (sequential){
-    cout << "inside if" << endl;
-    sequentialGraph first = generate_sequentialGraph(maxint);
-    cout << "we made it this far" << endl;
-    print_mat(first.adj);
+    for (int t = 0; t < to_generate; t++){
+      cout << "attempting to generate graph..." << endl;
+      sequentialGraph first = generate_sequentialGraph(maxint);
+      cout << "graph generated successfully!" << endl;
+
+      cout << "printing" << endl;
+      for (int i = 0; i < first.adj.size(); i++){
+        for (int j = 0; j < first.adj[i].size(); i++){
+          cout << first.adj[i][j].first << "," <<first.adj[i][j].second << endl;
+        }
+      }
+
+    }
+
+
+
   }
+
+  else{
+
+  }
+
 
 }
