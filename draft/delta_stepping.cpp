@@ -44,87 +44,59 @@
 using nodeList = std::vector<Node>;
 using requestList = std::vector<Request>;
 
-// REQUEST STRUCT
-// start node, end node, cost of going from start to end, and tentative value
-// double t_value;
-// in order: t_value, start, end, cost
-
-// NOTE - for a node, the 'weight' property describes the weight
-// of the edge to get to that node
-
-// find all nodes that have an edge to dest. node
-// and the cost of those edges tent(source) + c(source, dest)
-int get_node_index(Node target, nodeList nodelist){
-  if (!contains(nodelist, target)){
-    return -1
-  }
-
-  for (int i = 0; i < nodelist.size(); i++){
-    if (nodelist[i] == target){
-      return i;
-    }
-  }
-}
+#define LIGHT   true
+#define HEAVY   false
 
 
-std::vector<std::pair<Node, int>> compute_leads_to(Node dest, Graph graph){
-// THIS IS BROKEN. NEEDS UPDATING.
-// also code not tested, likely doesn't work.
 
+requestList findRequests(nodeList V_p, bool kind, Graph graph){
+  // kind is either light or heavy
 
-  std::vector<std::pair<Node, int>> res = {};
-  for (int i = 0; i < graph.nodes.size(); i++ ){
-    // for every list of nodes
-    nodeList currlist = graph.nodes[i];
+  requestList res = {};
+  // iterate through nodes in graph
+  for (int i = 0; i < graph.nodes.size(); i++){
+    nodeList reachable_nodes = {};
 
-    if (currlist.head == dest){ // don't check itself
-      continue;
-    }
+    // iterate through nodes in node list
+    for (int j = 0; j < V_p.size(); j++){
 
-    for (int j = 0; j < currlist[i].size(); j++){
-      // if dest node is in [some node]'s adjacency list,
-      if (contains(currlist, dest)){ // add it
-        int index = get_node_index(dest);
-        int cost = currlist.edge_weights[index]; // get cost of going from source to dest
-        int tentative = currlist.head.value; //assigned distance of source
+      // if reachable
+      if (graph.reachable(V_p[j], graph.nodes[i])){
 
-        res.push_back(std::make_pair(currlist[j], tentative+cost));
-      }
-    }
+        // do calculations
+        double weight = graph.get_weight(V_p[j], graph.nodes[i]);
+        double val = V_p[j].estimate + weight;
+        Request addme = Request(V_p[j], graph.nodes[i], val);
 
-  }
-
-  return res;
-}
-
-std::vector<std::pair<Node, int>> findRequests(Graph graph, nodeList Vprime, int kind){
-  // returns set of (w, tent(v) + c(v, w)) s.t. v in V' and (v,w) edge is of type [kind]
-  std::vector<std::pair<Node, int>> request_set;
-
-  if (!graph.check_assigned()){
-    graph.assign(); // assign if needed
-  }
-
-  for (int i = 0; i < graph.nodes.size(); i++){ // for every list of nodes
-    for (int j = 0; j < graph.nodes[i].size(); j++){ // for every node
-
-      if ((kind == LIGHT && graph.nodes[i].value <= graph.delta) || ((kind == HEAVY) && graph.nodes[i].value > graph.delta)){
-        // criterion #1 hit! it is of the correct kind
-        if (contains(Vprime, graph.nodes[i])){ // if node is in Vprime
-          // criterion #2 hit!
-
-          // add it to the request set
-          std::vector<std::pair<Node, int>> connected = compute_leads_to(graph.nodes[i], graph);
-          for (auto it = connected.begin(); it < connected.end(); it++){
-            request_set.push_back(*it);
-          }
-
+        // add if criteria all met
+        if (kind == LIGHT && weight <= graph.delta){
+          res.push_back(addme);
         }
 
+        else if (kind == HEAVY && weight > graph.delta){
+          res.push_back(addme);
+        }
       }
+    }
 
+    return res;
+}
+
+// return path of nodes one needs
+// to follow shortest path
+nodeList delta_stepping(Graph* graph, Node* start, Node* dest){
+  std::vector<Bucket> bucketList;
+  nodeList unvisited = graph->nodes;
+  // first make sure all tentative distances are infinity
+  for (int i = 0; i < graph->nodes.size(); i++){
+    if (graph->nodes[i].estimate != inf){
+      graph->nodes[i].estimate = inf;
     }
   }
-  return request_set;
 
+  Node sourceNode = Node();
+  // relax (s,0)
+  if (0 < sourceNode.estimate){
+
+  }
 }

@@ -23,24 +23,70 @@ using namespace std;
 
 using DijkstraResult = std::pair<vector<int>,vector<int>>;
 
-bool seq_correct(sequentialGraph graph, int start, DijkstraResult expected){
-  DijkstraResult algo_res = dijkstra(graph, start);
-  return algo_res == expected;
-}
+// bool seq_correct(sequentialGraph graph, int start, DijkstraResult expected){
+//   DijkstraResult algo_res = dijkstra(graph, start);
+//   return algo_res == expected;
+// }
 
+// these tests will not work yet
+// they assume that the dijkstra algorithm has a start and end node
 bool autotest_sequential(){
   //dijkstra(sequentialGraph g, int source)
   // FOR GRAPHS OF 1 NODE
-  vector<vector<int>> input = {{1, 1, 2}} // starts at 1, ends at 1, cost is 2
-  DijkstraResult expected = make_pair(1,2);
-  if (!seq_correct(graph1, expected)){
-    cout << "failed on test 1 of 1 node graphs" << endl;
+
+  vector<vector<int>> input = {{1, 1, 2}}
+  vector<int> nodes_passed = {1};
+  vector<int> edges_passed = {2};
+  DijkstraResult expected = make_pair(nodes_passed,edges_passed);
+
+  sequentialGraph graph = sequentialGraph(&input, input.size());
+  if (expected != dijkstra(graph, 1, 1)){
+    cout << "failed test 1 of 20" << endl;
     return false;
   }
 
-  // FOR GRAPHS OF 5 NODES
-  vector<vector<int>> input = {{1, 1, 2}} // starts at 1, ends at 1, cost is 2
-  sequentialGraph graph_1 = sequentialGraph(&input, 1);
+
+  input = {{0, 1, 3},
+          {0, 3, 2},
+          {0, 8, 4},
+          {8, 4, 8},
+          {3, 4, 1},
+          {3, 2, 6},
+          {1, 7, 4},
+          {7, 2, 2},
+          {6, 5, 8},
+          {5, 2, 1}};
+
+  // from node 0 to node 7
+
+  nodes_passed = {1, 7}; // nodes to pass through
+  edges_passed = {3, 4}; // weights
+  graph = sequentialGraph(&input, input.size());
+  expected = make_pair(nodes_passed, edges_passed); // for start at 0
+  if (expected != dijkstra(graph, 0, 7)){
+    cout << "failed test 2 of 20" << endl;
+    return false;
+  }
+
+  // from node 5 to node 8
+  nodes_passed = {2, 7, 1, 0, 8};
+  edges_passed = {1, 2, 4, 3, 4};
+  expected = make_pair(nodes_passed, edges_passed); // for start at 0
+  if (expected != dijkstra(graph, 5, 8)){
+    cout << "failed test 3 of 20" << endl;
+    return false;
+  }
+
+  input = {{1, 2, 1},
+           {1, 3, 2},
+           {1, 4, 3},
+           {2, 3, 5},
+           {3, 4, 8},
+           {4, 5, 10},
+           {5, 1, 4},
+           {2 ,4, 6},
+           {3, 5, 9},
+           { }}
 
   // FOR GRAPHS OF 10 NODES
 

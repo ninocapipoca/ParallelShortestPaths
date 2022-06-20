@@ -87,3 +87,84 @@ nodeValsMatrix generate_graph_mat(std::vector<nodeVals> nodes){
 
   return res;
 }
+
+
+
+
+/////////////////
+// STORING OLD CODE HERE - delta stepping old implementation
+// int get_node_index(Node target, nodeList nodelist){
+//   if (!contains(nodelist, target)){
+//     return -1
+//   }
+//
+//   for (int i = 0; i < nodelist.size(); i++){
+//     if (nodelist[i] == target){
+//       return i;
+//     }
+//   }
+// }
+//
+//
+// std::vector<std::pair<Node, int>> compute_leads_to(Node dest, Graph graph){
+// // THIS IS BROKEN. NEEDS UPDATING.
+// // also code not tested, likely doesn't work.
+//
+//
+//   std::vector<std::pair<Node, int>> res = {};
+//   for (int i = 0; i < graph.nodes.size(); i++ ){
+//     // for every list of nodes
+//     nodeList currlist = graph.nodes[i];
+//
+//     if (currlist.head == dest){ // don't check itself
+//       continue;
+//     }
+//
+//     for (int j = 0; j < currlist[i].size(); j++){
+//       // if dest node is in [some node]'s adjacency list,
+//       if (contains(currlist, dest)){ // add it
+//         int index = get_node_index(dest);
+//         int cost = currlist.edge_weights[index]; // get cost of going from source to dest
+//         int tentative = currlist.head.value; //assigned distance of source
+//
+//         res.push_back(std::make_pair(currlist[j], tentative+cost));
+//       }
+//     }
+//
+//   }
+//
+//   return res;
+// }
+//
+// std::vector<std::pair<Node, int>> findRequests(Graph graph, nodeList Vprime, int kind){
+//   // returns set of (w, tent(v) + c(v, w)) s.t. v in V' and (v,w) edge is of type [kind]
+//   std::vector<std::pair<Node, int>> request_set;
+//
+//   // if (!graph.check_assigned()){
+//   //   graph.assign(); // assign if needed
+//   // }
+//
+//   for (int i = 0; i < graph.nodes.size(); i++){ // for every list of nodes
+//     for (int j = 0; j < graph.nodes[i].size(); j++){ // for every node
+//
+//       if ((kind == LIGHT && graph.nodes[i].value <= graph.delta) || ((kind == HEAVY) && graph.nodes[i].value > graph.delta)){
+//         // criterion #1 hit! it is of the correct kind
+//         if (contains(Vprime, graph.nodes[i])){ // if node is in Vprime
+//           // criterion #2 hit!
+//
+//           // add it to the request set
+//           std::vector<std::pair<Node, int>> connected = compute_leads_to(graph.nodes[i], graph); // connected gives us the list of w's.
+//           for (auto it = connected.begin(); it < connected.end(); it++){
+//
+//             request_set.push_back(*it);
+//           }
+//
+//         }
+//
+//       }
+//
+//     }
+//   }
+//   return request_set;
+//
+// }
