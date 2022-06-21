@@ -132,7 +132,12 @@ nodeList delta_stepping(Graph* graph, Node* start, Node* dest){
       // UNFINISHED
       // double delta, std::vector<Bucket> &bucketList, Node &w, double x
       for (int i = 0; i < requests.size(); i++){
-        relax(graph.delta, &bucketList, )
+        relax(graph.delta, &bucketList, &(requests[i].end_node), requests[i].calculated_value);
+      }
+
+      requests = findRequests(deleted, HEAVY);
+      for (int i = 0; i < requests.size(); i++){
+        relax(graph.delta, &bucketList, &(requests[i].end_node), requests[i].calculated_value);
       }
     }
   }
