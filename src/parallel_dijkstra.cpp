@@ -11,11 +11,14 @@
 #include <boost/pending/relaxed_heap.hpp>
 #include <iterator>
 #include <limits>
+#include <iostream>
 
-#define INT_MAX std::numeric_limits<int>::max()
+#define MAX_WEIGHT std::numeric_limits<int>::max()
 
 using std::vector;
 using std::pair;
+using std::cout;
+using std::endl;
 //the algorithm keeps a global array for all tentative distance values
 //each processor is responsible for two sequential priority queues
 
@@ -23,12 +26,12 @@ using std::pair;
 //we conseptioally have 3 vectors: tentative,queued,setelled
 //practically, setelled is the output
 
-// vector<pair<int, int> > tent;//this is the tentetive weight vector, first
+// vector<pair<int, int> > tent;//this is the tentetive weight vector, first 
 // //elemnt is the number of the vertex, second is the distance from the source
 
 
 //In step one we want to find the globaly mimnimal L
-int global_L = INT_MAX;//this will be the only part that is exclusive read/write
+int global_L = MAX_WEIGHT;//this will be the only part that is exclusive read/write
 std::mutex global_L_mutex;
 std::mutex global_request_mutex;
 
@@ -46,8 +49,9 @@ typedef vector<Distance> Tent;
 
 
 //this graph implementation is taken from Shiran Afergan's video on Dijkstra's
-//algorithm on Youtube:
+//algorithm on Youtube: 
 //https://www.youtube.com/watch?v=pLElbKBc4RU&t=169s&ab_channel=ShiranAfergan
+
 
 class Graph{
     public:
@@ -64,6 +68,13 @@ class Graph{
         void clear(){
             adj.clear();
         }
+        void print(){
+            for(int i=1; i<adj.size(); i++){
+                for(int j=0; j<adj[i].size(); j++){
+                    std::cout << i << " " << adj[i][j].first << " " << adj[i][j].second << std::endl;
+                }
+            }
+        }
 };
 
 std::pair<vector<int>,vector<int>> parallel_dijkstra (Graph g, int source,
@@ -71,25 +82,25 @@ vector<MinHeap>::iterator start, vector<MinHeap>::iterator end );
 
 void find_mininmal_L(Graph g,vector<MinHeap>::iterator start, vector<MinHeap>::iterator end);
 void remove_not_minimal(Graph g, vector<int> tent, vector<MinHeap>::iterator start,
- vector<MinHeap>::iterator end, vector<pair<int,int> > requests);
-void gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start,
+ vector<MinHeap>::iterator end, vector<pair<int,int> > &requests);
+void gen_req_set(Graph g, ReqSet &set, vector<pair<int,int> >::iterator start,
 vector<pair<int,int> >::iterator end,vector<pair<int,int> > requests,Tent tent);
-void place_into_buffer(Graph g,ReqSet set,ReqSet::iterator start,
-ReqSet::iterator end,vector<std::mutex> mutex_vec);
-void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i,
-vector<std::mutex> mutex_vec, MinHeap queue);
+void place_into_buffer(Graph &g,ReqSet set,ReqSet::iterator start,
+ReqSet::iterator end,vector<std::mutex> &mutex_vec);
+void update_tent(Graph g, Tent &tent, vector<pair<int, int> > buf_i,
+vector<std::mutex> &mutex_vec, MinHeap queue);
 
 
 //four steps of a phse according to the paper:
 //step1: find the global minumum L of all elements in all Q_star queues
-//should be preformed in Ologp <= Ologn time
-void parallel_coordinator(size_t num_threads,Graph g, int source){
-
+//should be preformed in Ologp <= Ologn time 
+int parallel_coordinator(size_t num_threads,Graph g, int source, int destination){
+    
     unsigned long const block_size = g.adj.size()/num_threads;//do we add -1 to vectors?
     // auto startIter = tent.begin();//I should make sure that start iter
-    // // is the source for each of the queue pairs
-
-    vector<std::thread> workers(num_threads - 1);//excluding the thread we
+    // // is the source for each of the queue pairs 
+    
+    vector<std::thread> workers(num_threads - 1);//excluding the thread we 
     // vector<pair<vector<int>,vector<int> > > q
     // (num_threads-1, pair<vector<int>,vector<int> >(block_size-1,block_size-1));
     vector<MinHeap> q_and_q_star(num_threads-1);//vector of priority queue pairs realized by a heap
@@ -103,10 +114,10 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
     Tent tent(g.adj.size());//it is not stated clearly at the paper
     // but I assume that this vector should be constatnly maintained
     for(int weight:tent){
-        tent[weight] = INT_MAX;
+        tent[weight] = MAX_WEIGHT;
     }
     tent[source]  = 0;
-    //at the first iteration the distance of all nodes from the source is
+    //at the first iteration the distance of all nodes from the source is 
     //the maximum available
 
     auto startIter = q_and_q_star.begin();
@@ -115,7 +126,7 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
     vector<std::mutex> mutex_tent_vec(tent.size());
 
     while(!q_and_q_star.empty()){//as the paper states
-        global_L = INT_MAX;
+        global_L = MAX_WEIGHT;
         for(int j=0; j<num_threads-1;j++){//maybe put num_threads-1?
             if(!q_and_q_star[j].empty()){
                 auto endIter = startIter + block_size;
@@ -134,8 +145,7 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
             if(!q_and_q_star[j].empty()){
                 auto endIter = startIter + block_size;
                 workers[j] = std::thread(&remove_not_minimal,g,tent,startIter,
-                endIter, std::ref(requests),
-                std::ref(q_and_q_star));
+                endIter, std::ref(requests));
             }
             startIter = q_and_q_star.begin() + j*block_size;
         }
@@ -183,6 +193,7 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
         //now I need to get out the finished queue, maybe also use lazy copy
         //to keep track of which nodes were already visited
     }
+    return tent[destination];
 }
 
 
@@ -190,7 +201,7 @@ void parallel_coordinator(size_t num_threads,Graph g, int source){
 //remove if not minimal
 void remove_not_minimal(Graph g,vector<int> tent,
 vector<MinHeap>::iterator start,
-vector<MinHeap>::iterator end,vector<pair<int,int> > requests){
+vector<MinHeap>::iterator end,vector<pair<int,int> > &requests){
     while(start!=end){
         auto curDist = start->top().first;
         auto curNode = start->top().second;
@@ -204,7 +215,7 @@ vector<MinHeap>::iterator end,vector<pair<int,int> > requests){
     }
 }
 
-//finds minimal L by comparing the global L to the local distances in the
+//finds minimal L by comparing the global L to the local distances in the 
 //q,q_star pairs
 void find_mininmal_L(Graph g,vector<MinHeap>::iterator start,
 vector<MinHeap>::iterator end){
@@ -220,7 +231,7 @@ vector<MinHeap>::iterator end){
     }
 }
 
-void gen_req_set(Graph g, ReqSet set, vector<pair<int,int> >::iterator start,
+void gen_req_set(Graph g, ReqSet &set, vector<pair<int,int> >::iterator start,
 vector<pair<int,int> >::iterator end, vector<pair<int,int> > requests,
 Tent tent){
     while(start!=end){
@@ -235,8 +246,8 @@ Tent tent){
     }
 }
 
-void place_into_buffer(Graph g,ReqSet set,ReqSet::iterator start,
-ReqSet::iterator end,vector<std::mutex> mutex_vec){
+void place_into_buffer(Graph &g,ReqSet set,ReqSet::iterator start,
+ReqSet::iterator end,vector<std::mutex> &mutex_vec){
     while(start!=end){
         mutex_vec[start->first].lock();
         int temp = start->first;
@@ -246,7 +257,7 @@ ReqSet::iterator end,vector<std::mutex> mutex_vec){
     }
 }
 
-void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i, vector<std::mutex> mutex_vec, MinHeap queue){
+void update_tent(Graph g, Tent &tent, vector<pair<int, int> > buf_i, vector<std::mutex> &mutex_vec, MinHeap queue){
     for(auto& request : buf_i ){
         mutex_vec[request.first].lock();
         if(request.second<tent[request.first]){
@@ -257,3 +268,27 @@ void update_tent(Graph g, Tent tent, vector<pair<int, int> > buf_i, vector<std::
         mutex_vec[request.first].unlock();
     }
 }
+
+int main(int argc, char* argv[]){
+    if(argc<3){
+        cout<<"Usage: ./argv[0] <input file> <output file>"<<endl;
+        return 0;
+    }
+    vector<vector <int> > input;
+    for(int i=0; i<argc-1; i++){
+        input[i][0] = atoi(argv[i*3+1]);
+        input[i][1] = atoi(argv[i*3+2]);
+        input[i][2] = atoi(argv[i*3+3]);
+    }
+    Graph g;
+    g.generateGraph(input,argc%3);
+    g.print();
+    int res = parallel_coordinator(6,g,0,1);
+    cout<<"The shortest path is "<<res<<endl;
+    return 0;
+    // int 
+    // g.generateGraph(input);
+    // g.read_graph("graph.txt");
+    // auto start = std::chrono::high_resolution_clock::now();
+}
+

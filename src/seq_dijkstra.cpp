@@ -1,7 +1,7 @@
 #include <vector>
 #include <algorithm>
 #include <queue>
-#include <initializer_list>
+#include <initializer_list> 
 
 #define INT_MAX 255
 
@@ -15,11 +15,11 @@ typedef std::priority_queue<pair<int,int>, vector<pair<int,int>>,
 
 
 //this implementation is taken from Shiran Afergan's video on Dijkstra's
-//algorithm on Youtube:
+//algorithm on Youtube: 
 //https://www.youtube.com/watch?v=pLElbKBc4RU&t=169s&ab_channel=ShiranAfergan
 
 
-class sequentialGraph{
+class Graph{
     public:
         vector<vector<std::pair<int, int>>> adj;
         int nNodes;
@@ -33,25 +33,9 @@ class sequentialGraph{
         void clear(){
             adj.clear();
         }
-
-
-    sequentialGraph();
-    sequentialGraph(vector<vector<int>> &input, int n);
 };
 
-sequentialGraph::sequentialGraph(){
-
-  nNodes = 0;
-  vector<vector<std::pair<int, int>>> empty = {{}};
-  adj = empty;
-}
-
-sequentialGraph::sequentialGraph(vector<vector<int>> &input, int n){
-  nNodes = n;
-  this->generateGraph(input, n);
-}
-
-std::pair<vector<int>,vector<int>> dijkstra(sequentialGraph g, int source){
+std::pair<vector<int>,vector<int>> dijkstra(Graph g, int source){
     //Create minHeap sorted by distance
     MinHeap minHeap;
     vector<int> dist(g.nNodes+1, INT_MAX);
