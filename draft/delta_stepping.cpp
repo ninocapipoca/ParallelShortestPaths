@@ -82,10 +82,32 @@ requestList findRequests(nodeList V_p, bool kind, Graph graph){
     return res;
 }
 
+void relax(double delta, std::vector<Bucket> &bucketList, Node &w, double x){
+  if (x < w.estimate){
+    int in = floor(w.estimate / delta);
+    if (contains(bucketList[in].contents, w)){
+      bucketList[in].contents.remove(w);
+    }
+    bucketList[floor(x/delta)].contents.insert(w);
+  }
+}
+
+void relaxRequests(std::vector<Request> requests){
+
+}
+
+
+
 // return path of nodes one needs
 // to follow shortest path
 nodeList delta_stepping(Graph* graph, Node* start, Node* dest){
   std::vector<Bucket> bucketList;
+  // initialise list of buckets
+  int nr_buckets = graph.find_nr_buckets();
+  for (int n = 0; n < nr_buckets; n++){
+    bucketList.push_back(Bucket(n));
+  }
+
   nodeList unvisited = graph->nodes;
   // first make sure all tentative distances are infinity
   for (int i = 0; i < graph->nodes.size(); i++){
@@ -96,7 +118,21 @@ nodeList delta_stepping(Graph* graph, Node* start, Node* dest){
 
   Node sourceNode = Node();
   // relax (s,0)
-  if (0 < sourceNode.estimate){
+  relax(delta, &bucketList, &sourceNode, 0);
+  while (unvisited.size() > 0){
+    int smallest = smallest_nonempty(bucketList);
+    nodeList deleted = {};
+    while (bucketList[smallest].contents.size() != 0){
+      requestList requests = findRequests(bucketList[smallest].content, LIGHT, graph);
+      transfer_deleted(&deleted, bucketList[smallest].contents);
+      bucketList[smallest].contents = {}; // make bucket empty
 
+
+      // do relaxRequests(req)
+      // UNFINISHED
+      // double delta, std::vector<Bucket> &bucketList, Node &w, double x
+      for (int i = 0; i < requests.size(); i++){
+        relax(graph.delta, &bucketList, )
+      }
+    }
   }
-}

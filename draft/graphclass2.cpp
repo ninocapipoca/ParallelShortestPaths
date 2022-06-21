@@ -89,6 +89,7 @@ public:
   void insert_node(Node node, double weight);
   bool reachable(Node start, Node target);
   double get_weight(Node start, Node end);
+  int find_nr_buckets();
 };
 
 Graph::Graph(){
@@ -148,6 +149,21 @@ double Graph::get_weight(Node start, Node end){
   return start.weight_list[i];
 }
 
+int Graph::find_nr_buckets(){
+  double max_cost = 0;
+  // iter through nodes
+  for (int i = 0; i < nodes.size(); i++){
+    // iter through node cost lists
+    for (int j = 0; j < nodes[i].weight_list.size(); j++){
+      if (weight_list[j] > max_cost){
+        max_cost = weight_list[j];
+      }
+    }
+  }
+
+  return ceil(max_cost / delta) + 1;
+}
+
 struct Bucket{
   int ind; // index of bucket
   nodeList contents;
@@ -160,6 +176,8 @@ public:
 
 Bucket::Bucket(int index){
   ind = index;
+  nodeList empty = {};
+  contents = empty;
 }
 
 void Bucket::insert(Node node){
@@ -170,4 +188,23 @@ void Bucket::insert(Node node){
 void Bucket::remove(Node node){
   // removes node specifically
   contents.remove(contents.begin(), contents.end(), node);
+}
+
+int smallest_nonempty(std::vector<Bucket> bucketList){
+  // returns index of smallest nonempty bucket
+  int smallest_size = 99999;
+  int index = 0;
+  for (int i = 0; i < bucketList.size(); i++){
+    if (bucketList[i].contents.size() < smallest_size && bucketList[i].contents.size() > 0){
+      smallest_size = bucketList[i].contents.size();
+      index = i;
+    }
+  }
+  return index;
+}
+
+void transfer_deleted(nodeList &deleted, nodeList contents){
+  for (int i = 0; i < contents.size(); i++){
+    deleted.push_back(contents[i]);
+  }
 }
